@@ -39,7 +39,7 @@ let hmm data =
 let _ =
   Format.printf "@.-- HMM, CPS Importance Sampling --@.";
   let data =
-    Owl.Arr.(linspace 0. 20. 20 + gaussian [| 20 |])
+    Owl.Arr.(linspace 0. 100. 100 + gaussian [| 100 |])
     |> Owl.Arr.to_array |> Array.to_list
   in
   let dist = Distribution.split_list (infer hmm data) in
@@ -64,7 +64,7 @@ let hmm data =
 let _ =
   Format.printf "@.-- HMM, CPS Particle Filter --@.";
   let data =
-    Owl.Arr.(linspace 0. 20. 20 + gaussian [| 20 |])
+    Owl.Arr.(linspace 0. 100. 100 + gaussian [| 100 |])
     |> Owl.Arr.to_array |> Array.to_list
   in
   let dist = Distribution.split_list (infer hmm data) in

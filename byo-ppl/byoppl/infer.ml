@@ -3,12 +3,18 @@ module Gen = struct
   and 'a next = 'a prob -> 'a prob
   and ('a, 'b) model = 'a -> ('b -> 'b next) -> 'b next
 
-  let sample _d _k _prob = assert false
-  let factor _s _k _prob = assert false
+  let sample d k prob =
+    let v = Distribution.draw d in
+    k v prob
+
+  let factor _s k prob = k () prob
   let observe d x = factor (Distribution.logpdf d x)
   let assume p = factor (if p then 0. else -.infinity)
-  let exit _v _prob = assert false
-  let draw _model _data = assert false
+  let exit v _prob = Some v
+
+  let draw model data =
+    let v = (model data) exit None in
+    Option.get v
 end
 
 module Importance_sampling = struct
@@ -17,17 +23,62 @@ module Importance_sampling = struct
   and 'a next = 'a prob -> 'a prob
   and ('a, 'b) model = 'a -> ('b -> 'b next) -> 'b next
 
-  let sample _d _k _prob = assert false
-  let factor _s _k _prob = assert false
+  let sample d k prob =
+    let v = Distribution.draw d in
+    k v prob
+
+  let factor s k prob =
+    let particle = prob.particles.(prob.id) in
+    prob.particles.(prob.id) <- { particle with score = s +. particle.score };
+    k () prob
+
   let assume p = factor (if p then 0. else -.infinity)
   let observe d x = factor (Distribution.logpdf d x)
-  let run_next _prob = assert false
-  let exit _v _prob = assert false
-  let infer ?(_n = 1000) _model _data = assert false
+
+  let exit v prob =
+    let particle = prob.particles.(prob.id) in
+    prob.particles.(prob.id) <- { particle with value = Some v };
+    prob
+
+  let infer ?(n = 1000) model data =
+    let particles =
+      Array.make n { value = None; score = 0.; k = (model data) exit }
+    in
+    Array.iteri (fun i p -> ignore (p.k { id = i; particles })) particles;
+
+    let values = Array.map (fun p -> Option.get p.value) particles in
+    let logits = Array.map (fun p -> p.score) particles in
+    Distribution.support ~values ~logits
 end
 
 module Particle_filter = struct
-  let factor _s _k _prob = assert false
+  include Importance_sampling
+
+  let resample particles =
+    let logits = Array.map (fun p -> p.score) particles in
+    let values = Array.map (fun p -> { p with score = 0. }) particles in
+    let dist = Distribution.support ~logits ~values in
+    Array.iteri (fun i _ -> particles.(i) <- Distribution.draw dist) particles
+
+  let factor s k prob =
+    let particle = prob.particles.(prob.id) in
+    prob.particles.(prob.id) <-
+      { particle with score = s +. particle.score; k = k () };
+    prob
+
   let assume p = factor (if p then 0. else -.infinity)
   let observe d x = factor (Distribution.logpdf d x)
+
+  let infer ?(n = 1000) model data =
+    let particles =
+      Array.make n { value = None; score = 0.; k = (model data) exit }
+    in
+    while Array.exists (fun p -> Option.is_none p.value) particles do
+      Array.iteri (fun i p -> ignore (p.k { id = i; particles })) particles;
+      resample particles
+    done;
+
+    let values = Array.map (fun p -> Option.get p.value) particles in
+    let logits = Array.map (fun p -> p.score) particles in
+    Distribution.support ~values ~logits
 end
