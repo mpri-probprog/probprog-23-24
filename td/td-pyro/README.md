@@ -1,3 +1,7 @@
+<a target="_blank" href="https://colab.research.google.com/github/mpri-probprog/probprog-23-24/blob/main/td/td-pyro/pyro-intro.ipynb">
+  <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
+</a>
+
 # Une courte introduction à Pyro
 
 https://pyro.ai/
