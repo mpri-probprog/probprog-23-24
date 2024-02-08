@@ -29,3 +29,9 @@ The `Byoppl` library contains the following modules
 - `Utils`: Missing utilities functions used in other modules.
 
 Examples can be found in the `examples` directory.
+
+The `Rppl` library contains the reactive extension of BYO-PPL (for Zelus).
+
+- `rppl.ml` (TODO): Library for reactive probabilistic programming with Zelus
+- `rppl.zli`: Signature file for the Zelus compiler
+- `hmm.zls`, `coin.zls` (TODO): Simple examples of reactive probabilistic models.
