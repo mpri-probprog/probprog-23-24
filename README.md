@@ -7,3 +7,9 @@ Contacts
 - Guillaume Baudart: guillaume.baudart@inria.fr
 - Guillaume Geoffroy: guillaume.geoffroy@irif.fr
 - Xavier Rival: xavier.rival@ens.fr
+
+## Evaluation
+
+- 23/01/24 [Project](./td/projet_semi_symb.pdf)
+- 07/03/24 [Article presentation](https://notes.inria.fr/s/xEZ3d45DV) (subscribe)
+- TBD. Exam
