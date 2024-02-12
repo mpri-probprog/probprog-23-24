@@ -1,8 +1,11 @@
 open Rppl
 
-let node hmm (prob, x) = 0. (* TODO *)
+let node hmm (prob, y) = x where 
+  rec x = 0. -> sample(prob, gaussian (pre x) 1.)
+  and () = observe(prob, gaussian x 1., y)
+  (* TODO *)
 
 let node main () = () where
-  rec obs = 0. fby obs +. 1.
+  rec obs = 0. fby obs +. 1. +. draw (gaussian 0. 1.)
   and d = infer_pf 100 hmm obs
   and () = print_float obs; print_string " "; print_float (mean d); print_newline ()

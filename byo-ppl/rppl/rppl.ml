@@ -10,20 +10,35 @@ let mean = Distribution.mean
 
 open Ztypes
 
-type prob = None (* TODO *)
+type prob = { id : int; scores : float array } (* TODO *)
 
-let sample (_prob, d) = assert false (* TODO *)
+let sample (_prob, d) = draw d (* TODO *)
 
-let factor (prob, s) = assert false (* TODO *)
+let factor (prob, s) =
+  prob.scores.(prob.id) <- prob.scores.(prob.id) +. s (* TODO *)
 
-let observe (prob, d, x) = assert false (* TODO *)
+let observe (prob, d, x) = factor (prob, Distribution.logpdf d x) (* TODO *)
 
 type 'a infer_state = { mutable particles : 'a array; scores : float array }
 
 let infer_importance n (Cnode { alloc; reset; step; copy }) =
-  let infer_alloc () = assert false (* TODO *) in
-  let infer_reset state = assert false (* TODO *) in
-  let infer_step state data = assert false (* TODO *) in
+  let infer_alloc () =
+    { particles = Array.init n (fun _ -> alloc ()); scores = Array.make n 0. }
+    (* TODO *)
+  in
+  let infer_reset state =
+    Array.fill state.scores 0 n 0.;
+    Array.iter reset state.particles (* TODO *)
+  in
+  let infer_step state data =
+    let values =
+      Array.mapi
+        (fun i p -> step p ({ scores = state.scores; id = i }, data))
+        state.particles
+    in
+    Distribution.support ~values ~logits:state.scores
+    (* TODO *)
+  in
   let infer_copy _ _ = () in
   Cnode
     {
@@ -33,13 +48,39 @@ let infer_importance n (Cnode { alloc; reset; step; copy }) =
       copy = infer_copy;
     }
 
-let resample alloc copy n state = assert false (* TODO *)
+let resample alloc copy n state =
+  let d = Distribution.support ~values:state.particles ~logits:state.scores in
+  let particles =
+    Array.init n (fun i ->
+        let p = draw d in
+        let p' = alloc () in
+        copy p p';
+        p')
+  in
+  state.particles <- particles;
+  Array.fill state.scores 0 n 0.
 
 let infer_pf n (Cnode { alloc; reset; step; copy }) =
-  let infer_alloc () = assert false (* TODO *) in
-  let infer_reset state = assert false (* TODO *) in
-  let infer_step state data = assert false (* TODO *) in
-  let infer_copy _ _ = () in
+  let infer_alloc () =
+    { particles = Array.init n (fun _ -> alloc ()); scores = Array.make n 0. }
+    (* TODO *)
+  in
+  let infer_reset state =
+    Array.fill state.scores 0 n 0.;
+    Array.iter reset state.particles (* TODO *)
+  in
+  let infer_step state data =
+    let values =
+      Array.mapi
+        (fun i p -> step p ({ scores = state.scores; id = i }, data))
+        state.particles
+    in
+    let d = Distribution.support ~values ~logits:state.scores in
+    resample alloc copy n state;
+    d
+  in
+
+  let infer_copy _ _ = assert false in
   Cnode
     {
       alloc = infer_alloc;
